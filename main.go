@@ -2,6 +2,13 @@ package main
 
 import "fmt"
 
+
+type iTest interface{
+  SayHello(
+  Say(s string)
+}
+
+
 type test struct {
 	Name string
 	Age  int
