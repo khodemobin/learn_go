@@ -4,14 +4,15 @@ import "fmt"
 
 
 type iTest interface{
-  SayHello(
+  SayHello()
   Say(s string)
+  Increment()
+  GetValue() int
 }
 
 
-type test struct {
-	Name string
-	Age  int
+type iTestImpl struct {
+  value int
 }
 
 func main() {
@@ -39,8 +40,19 @@ func main() {
 	// a := 5
 	// add(&a)
 
-	a := 1
-	fmt.Println(a)
+  // var a iTest
+  // a = &iTestImpl{}
+  // a.SayHello()
+  // a.Increment()
+  // a.Increment()
+
+  // fmt.Println(a.GetValue())
+
+
+  a := 1
+
+  fmt.Println(a)
+
 }
 
 // func add(a *int) {
@@ -49,3 +61,21 @@ func main() {
 // 	}()
 // 	*a++
 // }
+
+
+func(tst iTestImpl)SayHello(){
+    fmt.Println("hello")
+}
+
+func (tst iTestImpl)Say(s string){
+  fmt.Println(s)
+}
+
+func(tst *iTestImpl)Increment(){
+  tst.value++
+}
+
+
+func(tst *iTestImpl)GetValue() int{
+  return  tst.value
+}
