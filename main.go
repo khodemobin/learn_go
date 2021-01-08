@@ -1,81 +1,52 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
-
-type iTest interface{
-  SayHello()
-  Say(s string)
-  Increment()
-  GetValue() int
-}
-
-
-type iTestImpl struct {
-  value int
-}
+	"github.com/khodemobin/learn_go/handlers"
+)
 
 func main() {
-	// var a [5]int = [5]int{}
-	// a := []int{}
-	// a := make([]int, 2)
-	// a[0] = 1
-	// a[1] = 2
-	// a = append(a, 3, 4, 5, 6)
+	logger := log.New(os.Stdout, "product-api", log.LstdFlags)
+	helloHandler := handlers.NewHello(logger)
+	goodbyeHandler := handlers.NewGoodbye(logger)
+	productsHandler := handlers.NewProducts(logger)
 
-	// var a map[string]string = map[string]string{
-	// 	"1": "1",
-	// 	"2": "2",
-	// }
+	serverMux := http.NewServeMux()
 
-	// a := make(map[string]string)
-	// a["1"] = "1"
-	// a["2"] = "2"
+	serverMux.Handle("/", helloHandler)
+	serverMux.Handle("/products", productsHandler)
 
-	// a := test{
-	// 	Name: "mobin",
-	// 	Age:  1,
-	// }
+	serverMux.Handle("/bye", goodbyeHandler)
 
-	// a := 5
-	// add(&a)
+	server := &http.Server{
+		Addr:         ":8000",
+		Handler:      serverMux,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  time.Second,
+		WriteTimeout: time.Second,
+	}
 
-  // var a iTest
-  // a = &iTestImpl{}
-  // a.SayHello()
-  // a.Increment()
-  // a.Increment()
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			logger.Fatal(err)
+		}
+	}()
 
-  // fmt.Println(a.GetValue())
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
 
+	sig := <-sigChan
 
-  a := 1
+	logger.Println("Recieved terminate , graceful shoutdown", sig)
 
-  fmt.Println(a)
-
-}
-
-// func add(a *int) {
-// 	defer func() {
-// 		fmt.Println("hi")
-// 	}()
-// 	*a++
-// }
-
-
-func(tst iTestImpl)SayHello(){
-    fmt.Println("hello")
-}
-
-func (tst iTestImpl)Say(s string){
-  fmt.Println(s)
-}
-
-func(tst *iTestImpl)Increment(){
-  tst.value++
-}
-
-
-func(tst *iTestImpl)GetValue() int{
-  return  tst.value
+	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	server.Shutdown(tc)
 }
