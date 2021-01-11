@@ -47,6 +47,10 @@ func main() {
 
 	logger.Println("Recieved terminate , graceful shoutdown", sig)
 
-	tc, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	tc, err := context.WithTimeout(context.Background(), 30*time.Second)
+
+	if err != nil {
+		panic(err)
+	}
 	server.Shutdown(tc)
 }
