@@ -44,9 +44,16 @@ func (products *Products) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		idString := g[0][1]
-		id, _ := strconv.Atoi(idString)
+		id, err := strconv.Atoi(idString)
 
-		products.logger.Println("got id", id)
+		if err != nil {
+			products.logger.Println("Invalid URI to convert to number", idString)
+			http.Error(w, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+
+		products.updateProducts(id, w, r)
+
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -80,5 +87,31 @@ func (products *Products) addProduct(w http.ResponseWriter, r *http.Request) {
 	products.logger.Printf("Prob: %#v", prod)
 
 	data.AddProduct(prod)
+
+}
+
+func (p Products) updateProducts(id int, w http.ResponseWriter, r *http.Request) {
+	p.logger.Println("Handle update product")
+
+	prod := &data.Product{}
+
+	err := prod.FromJson(r.Body)
+
+	if err != nil {
+		http.Error(w, "Unable to parse json", http.StatusBadRequest)
+		return
+	}
+
+	err = data.UpdateProduct(id, prod)
+
+	if err == data.ErrProductNotFound {
+		http.Error(w, "Product not found", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "Server error", http.StatusInternalServerError)
+		return
+	}
 
 }
