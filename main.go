@@ -8,24 +8,25 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/khodemobin/learn_go/handlers"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"github.com/khodemobin/learn_go/middlewares"
+	"github.com/khodemobin/learn_go/router"
 )
 
 func main() {
+
 	logger := log.New(os.Stdout, "product-api", log.LstdFlags)
-	helloHandler := handlers.NewHello(logger)
-	goodbyeHandler := handlers.NewGoodbye(logger)
-	productsHandler := handlers.NewProducts(logger)
+	serverMux := mux.NewRouter()
 
-	serverMux := http.NewServeMux()
+	//register routes
+	router.RegisterRoutes(serverMux, logger)
 
-	serverMux.Handle("/", helloHandler)
-	serverMux.Handle("/products", productsHandler)
-
-	serverMux.Handle("/bye", goodbyeHandler)
+	//register middlewares
+	middlewares.RegisterMiddlewares()
 
 	server := &http.Server{
-		Addr:         ":8000",
+		Addr:         ":" + getPort(),
 		Handler:      serverMux,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  time.Second,
@@ -47,10 +48,26 @@ func main() {
 
 	logger.Println("Recieved terminate , graceful shoutdown", sig)
 
-	tc, err := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-	if err != nil {
-		panic(err)
+	if cancel != nil {
+		panic(cancel)
 	}
-	server.Shutdown(tc)
+	server.Shutdown(ctx)
+}
+
+func getPort() string {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		return "8000"
+	}
+
+	return port
 }
