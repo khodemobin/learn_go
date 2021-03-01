@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/fatih/color v1.10.0 // indirect
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
