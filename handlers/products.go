@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
@@ -33,18 +34,11 @@ func (products *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 func (products *Products) AddProduct(w http.ResponseWriter, r *http.Request) {
 	products.logger.Println("Handle Post Products")
 
-	prod := &data.Product{}
-	err := prod.FromJson(r.Body)
-
-	if err != nil {
-		http.Error(w, "Unable to parse json", http.StatusBadRequest)
-
-	}
+	prod := r.Context().Value(KeyProduct{}).(data.Product)
 
 	products.logger.Printf("Prob: %#v", prod)
 
-	data.AddProduct(prod)
-
+	data.AddProduct(&prod)
 }
 
 func (p Products) UpdateProducts(w http.ResponseWriter, r *http.Request) {
@@ -57,16 +51,9 @@ func (p Products) UpdateProducts(w http.ResponseWriter, r *http.Request) {
 
 	p.logger.Println("Handle update product")
 
-	prod := &data.Product{}
+	prod := r.Context().Value(KeyProduct{}).(data.Product)
 
-	err = prod.FromJson(r.Body)
-
-	if err != nil {
-		http.Error(w, "Unable to parse json", http.StatusBadRequest)
-		return
-	}
-
-	err = data.UpdateProduct(id, prod)
+	err = data.UpdateProduct(id, &prod)
 
 	if err == data.ErrProductNotFound {
 		http.Error(w, "Product not found", http.StatusNotFound)
@@ -77,5 +64,25 @@ func (p Products) UpdateProducts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Server error", http.StatusInternalServerError)
 		return
 	}
+
+}
+
+type KeyProduct struct{}
+
+func (p *Products) MiddlewareValidateProduct(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		prod := data.Product{}
+		err := prod.FromJson(r.Body)
+
+		if err != nil {
+			http.Error(rw, "Unable to parse json", http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
+		req := r.WithContext(ctx)
+
+		next.ServeHTTP(rw, req)
+	})
 
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/khodemobin/learn_go/middlewares"
 	"github.com/khodemobin/learn_go/router"
 )
 
@@ -21,9 +20,6 @@ func main() {
 
 	//register routes
 	router.RegisterRoutes(serverMux, logger)
-
-	//register middlewares
-	middlewares.RegisterMiddlewares()
 
 	server := &http.Server{
 		Addr:         ":" + getPort(),
