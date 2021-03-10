@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -76,6 +77,17 @@ func (p *Products) MiddlewareValidateProduct(next http.Handler) http.Handler {
 
 		if err != nil {
 			http.Error(rw, "Unable to parse json", http.StatusBadRequest)
+			return
+		}
+
+		// validate the product
+		err = prod.Validate()
+		if err != nil {
+			http.Error(
+				rw,
+				fmt.Sprintf("[ERROR] validating product: %s", err),
+				http.StatusUnprocessableEntity,
+			)
 			return
 		}
 
